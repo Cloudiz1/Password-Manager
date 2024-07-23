@@ -1,0 +1,1 @@
+used to generate Sbox.py from a tuple i found online (keeping in case i do something stupid)
