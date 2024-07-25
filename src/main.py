@@ -6,12 +6,7 @@ test_input = "abcdefghijklmnopqrstuvwxyz"
 
 states = create_states(test_input)
 for state in states:
-    print("original state:")
-    print_state(state)
-    print("shifted state:")
-    shift_rows(state)
-    print("inverse shifted:")
-    inverse_shift_rows(state)
+    mix_columns(state)
     
 # print("\nfinal state(s):")
 # for state in states:
