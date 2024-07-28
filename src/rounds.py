@@ -1,5 +1,7 @@
-from Sbox import *
+from lookup import *
 from print_state import *
+import json
+import binascii
 
 def parent_sub_bytes(state, lookup):
     for row in range(len(state)):
@@ -124,7 +126,12 @@ def mix_columns(state):
     
 def inv_mix_columns(state):
     mix_columns_parent(state, "inv")
-            
+
+def load_key(path):
+    with open(path, "r") as f:
+        key_dict = json.load(f)
+        key = key_dict["key"]
+        print(key, len(key))
         
 # mix_column([0xdb, 0x13, 0x53, 0x45])
 # state = [
@@ -140,3 +147,5 @@ def inv_mix_columns(state):
 # print_hex(state)
 
 # print(hex(GF(0xdf, 14)))
+
+load_key("key.json")
