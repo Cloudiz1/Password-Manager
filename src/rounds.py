@@ -1,19 +1,14 @@
 from lookup import *
 from print_state import *
 import json
-import binascii
+from inputs import *
 
 def parent_sub_bytes(state, lookup):
     for row in range(len(state)):
         for column in range(len(state)):
             curr_byte = state[row][column]
             
-            curr_byte = str(format(int(curr_byte, 16), "08b")) # hex to iterable bits
-            
-            first_nibble = int(curr_byte[:4], 2)
-            last_nibble = int(curr_byte[4:], 2)
-            
-            sub_byte = lookup[first_nibble][last_nibble] 
+            sub_byte = lookup[int(curr_byte, 16)]
             state[row][column] = sub_byte
             
     return state
@@ -126,12 +121,101 @@ def mix_columns(state):
     
 def inv_mix_columns(state):
     mix_columns_parent(state, "inv")
+    
+def list_to_hex(input_list):
+    try:
+        for iteration, byte in enumerate(input_list):
+            input_list[iteration] = int(byte, 16)
+    except:
+        pass
+    
+    buffer = ""
+    for element in input_list:
+        buffer += f"{element:02x}"
+        
+    return buffer
+    
+def find_first_word(first_word, last_word, rcon): # find first byte of new word with last byte of previous word
+    rot_word = last_word[1:4] + [last_word[0]]
+    
+    sub_word = []
+    
+    for word in rot_word:
+        sub_word.append(int(Sbox[word], 16))
+        
+    sub_word[0] ^= rcon
+    
+    output_word = []
+    for i in range(len(sub_word)):
+        output_word.append(sub_word[i] ^ first_word[i])
+        
+    return output_word
 
-def load_key(path):
-    with open(path, "r") as f:
+def find_next_word(word_1, word_2): # words are inputted as arrays, should return as arrays
+    buffer = []
+    for i in range(len(word_1)):
+        buffer.append(word_1[i] ^ word_2[i])
+        
+    # print("input 1: " + list_to_int(word_1) + " input 2: " + list_to_int(word_2) + " output: " + list_to_int(buffer))
+        
+    return buffer
+    
+def generate_keys():
+    key_array = []
+    with open("key.json", "r") as f:
         key_dict = json.load(f)
-        key = key_dict["key"]
-        print(key, len(key))
+        
+        buffer = ""
+        for i, character in enumerate(key_dict["key"]):
+            buffer += character
+            
+            if i % 2 != 0:
+                key_array.append(int(buffer, 16))   
+                buffer = ""
+    
+    words = return_words_from_list(key_array) # populates the list with the first key
+    
+    for i in range(4, 44): # 4*10 rounds; start at 4 to account for the four words already in words
+        if i % 4 == 0:
+            words.append(find_first_word(words[i-4], words[i-1], rcon[(i - 4)//4]))
+            
+        else:
+            words.append(find_next_word(words[i-1], words[i-4]))
+            
+            
+    for i in range(len(words)):
+        words[i] = list_to_hex(words[i])
+        
+    buffer = ""
+    keys = []
+    for i, word in enumerate(words):
+        buffer += word
+        
+        if (i + 1) % 4 == 0:
+            keys.append(buffer)
+            buffer = ""
+            
+    for i, key in enumerate(keys):
+        keys[i] = key_into_state(key)
+        
+    return keys
+        
+    # for key in keys:
+    #     print_state(key)        
+    # for i, word in enumerate(words):
+    #     print(list_to_int(word), i)
+            
+        # key_state = create_key_state(key_array)
+        
+
+        
+            
+        # print(byte_array)
+        # key = create_state(key_hex)a
+        # print_state(key)
+        
+def add_round_key(input_state, key_state):
+    return
         
 # mix_column([0xdb, 0x13, 0x53, 0x45])
 # state = [
@@ -147,5 +231,4 @@ def load_key(path):
 # print_hex(state)
 
 # print(hex(GF(0xdf, 14)))
-
-load_key("key.json")
+generate_keys()
