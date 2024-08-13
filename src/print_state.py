@@ -18,4 +18,16 @@ def print_hex(state):
         
     print_state(state_buffer)
     
+def print_bin(state):
+    bin_array = [[0 for x in range(4)] for x in range(4)]
+    
+    for i in range(4):
+        for j in range(4):
+            if isinstance(state[i][j], str):
 
+                bin_array[i][j] = bin(int(state[i][j], 16))
+                
+            else:
+                bin_array[i][j] = bin(state[i][j])
+
+    print_state(bin_array)

@@ -215,7 +215,19 @@ def generate_keys():
         # print_state(key)
         
 def add_round_key(input_state, key_state):
-    return
+    new_state = [[0 for x in range(4)] for x in range(4)]
+    for i in range(4):
+        for j in range(4):
+            new_state[i][j] = int(input_state[i][j], 16) ^ int(key_state[i][j], 16)
+    
+    # print("input state:")
+    # print_bin(input_state)
+    
+    # print("key_state:")
+    # print_bin(key_state)
+    
+    # print("output state")
+    # print_bin(new_state)
         
 # mix_column([0xdb, 0x13, 0x53, 0x45])
 # state = [
@@ -231,4 +243,3 @@ def add_round_key(input_state, key_state):
 # print_hex(state)
 
 # print(hex(GF(0xdf, 14)))
-generate_keys()
