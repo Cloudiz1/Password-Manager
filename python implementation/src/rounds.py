@@ -33,13 +33,13 @@ def shift_rows_parent(state, direction):
                     pointer -= 4
                 buffer[pointer] = byte
             
-        state[shift_count] = buffer
+        return buffer
             
 def shift_rows(state):
-    shift_rows_parent(state, "left")
+    return shift_rows_parent(state, "left")
     
 def inverse_shift_rows(state):
-    shift_rows_parent(state, "right")
+    return shift_rows_parent(state, "right")
     
 def GF(byte, num): # Galois field multiplication
     match(num):
@@ -101,6 +101,8 @@ def inv_mix_column(column):
     return unmixed_column
         
 def mix_columns_parent(state, mode):
+    # output_state = [[0 for x in range(4)] for x in range(4)]
+    print_state(state)
     for column in range(len(state)):
         buffer = [] # tmp column
         for row in range(len(state)):
@@ -117,10 +119,10 @@ def mix_columns_parent(state, mode):
                 state[row][column] = byte
             
 def mix_columns(state):
-    mix_columns_parent(state, "mix")
+    return mix_columns_parent(state, "mix")
     
 def inv_mix_columns(state):
-    mix_columns_parent(state, "inv")
+    return mix_columns_parent(state, "inv")
     
 def list_to_hex(input_list):
     try:
@@ -220,6 +222,7 @@ def add_round_key(input_state, key_state):
         for j in range(4):
             new_state[i][j] = int(input_state[i][j], 16) ^ int(key_state[i][j], 16)
     
+    return new_state
     # print("input state:")
     # print_bin(input_state)
     
@@ -243,3 +246,30 @@ def add_round_key(input_state, key_state):
 # print_hex(state)
 
 # print(hex(GF(0xdf, 14)))
+
+def encrpyt(input_text):
+    keys = generate_keys()
+    states = create_states(input_text)
+    
+    for state in states:
+        state = add_round_key(state, keys[0])
+        
+    del keys[0]
+    
+    for i, key in enumerate(keys):
+        for state in states:
+            state = sub_bytes(state)
+            state = shift_rows(state)
+            
+            if i != 10:
+                print(state)
+                state = mix_column(state)
+                
+            if i == 10:
+                print("a")
+                
+            state = add_round_key(state, key)
+            
+    return states
+
+encrpyt("test string")
