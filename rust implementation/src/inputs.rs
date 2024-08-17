@@ -47,12 +47,12 @@ fn create_states (input: &str) -> Vec<[[char; 4]; 4]>
     return states;
 }
 
-pub fn test() {
-    // // tests creates_states()
-    // let test_input: &str = "abcdefghijklmnopqrstuvwxyz";
-    // println!("{:#?}", create_states(test_input));
+// pub fn test() {
+//     // // tests creates_states()
+//     // let test_input: &str = "abcdefghijklmnopqrstuvwxyz";
+//     // println!("{:#?}", create_states(test_input));
 
-    // // tests just create_state()
-    // let test_input: [char; 16] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']; 
-    // println!("{:?}", create_state(test_input));
-}
+//     // // tests just create_state()
+//     // let test_input: [char; 16] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']; 
+//     // println!("{:?}", create_state(test_input));
+// }
