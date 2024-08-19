@@ -10,7 +10,7 @@ fn create_state (input: [u8; 16]) -> [[u8; 4]; 4]
         }
     }
 
-    return output;
+    output
 }
 
 pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]>
@@ -44,7 +44,7 @@ pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]>
         states.push(create_state(char_buffer));
     }
 
-    return states;
+    states
 }
 
 // pub fn test() {
