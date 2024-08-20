@@ -1,4 +1,4 @@
-fn create_state (input: [u8; 16]) -> [[u8; 4]; 4]
+pub fn create_state (input: [u8; 16]) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4]; 
 

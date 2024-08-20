@@ -1,7 +1,9 @@
 use crate::lookup;
+use crate::states;
+use std::fs;
 extern crate hex;
 
-pub fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
+fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
@@ -29,7 +31,7 @@ pub fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
     output
 }
 
-pub fn shift_rows(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
+fn shift_rows(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
@@ -118,7 +120,7 @@ fn gfm(byte: u8, num: u8) -> u8
     }
 }
 
-pub fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
+fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
@@ -148,4 +150,100 @@ pub fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
     }
 
     output
+}
+
+const KEY_PATH: &str = "src/key.txt";
+fn generate_keys() -> Vec<[[u8; 4]; 4]>
+{
+    let key = match fs::read_to_string(KEY_PATH)
+    {
+        Ok(v) => v,
+        Err(e) => panic!("failed to read file: {:?}", e)
+    };
+
+    let mut org_key_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+    let mut tmp: String = String::new();
+
+    for (i, c) in key.chars().enumerate()
+    {
+        tmp.push(c);
+
+        if i % 2 != 0
+        {
+            org_key_state[((i-1)/2)/4][((i-1)/2)%4] = match u8::from_str_radix(&tmp, 16) // fills org key state with key
+            {
+                Ok(v) => v,
+                Err(e) => panic!("Error converting hex to u8: {:?}", e)
+            };
+            
+            tmp = "".to_string();
+        }
+    }   
+
+    let mut words: Vec<[u8; 4]> = vec![];
+
+    for word in org_key_state
+    {
+        words.push(word);
+    }
+
+    for i in 4..44 // 4 words * 10 rounds; +4 on start and end cause of org. key
+    {
+        if i % 4 == 0
+        {   
+            let rot_word: [u8; 4] = [words[i-1][1], words[i-1][2], words[i-1][3], words[i-1][0]];
+            let mut sub_bytes: [u8; 4] = [b'\0'; 4];
+
+            for (j, byte) in rot_word.iter().enumerate()
+            {
+                let sub_byte = match u8::from_str_radix(lookup::SBOX[*byte as usize], 16)
+                {
+                    Ok(v) => v,
+                    Err(e) => panic!("Error converting hex to u8: {:?}", e)
+                };
+
+                sub_bytes[j] = sub_byte;
+            }
+
+            sub_bytes[0] ^= lookup::RCON[(i/4)-1];
+
+            let mut output: [u8; 4] = [b'\0'; 4];
+            for (j, byte) in sub_bytes.iter().enumerate()
+            {
+                output[j] = sub_bytes[j] ^ words[i-4][j];
+            }
+
+            words.push(output);
+        }
+        else 
+        {
+            let mut output: [u8; 4] = [b'\0'; 4];
+            for (i, (byte1, byte2)) in words[i-1].iter().zip(words[i-4].iter()).enumerate()
+            {
+                output[i] = byte1 ^ byte2;
+            }
+
+            words.push(output);
+        }
+    }
+
+    let mut output: Vec<[[u8; 4]; 4]> = vec![];
+
+    let mut tmp_key_buffer: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+    for (i, word) in words.into_iter().enumerate()
+    {
+        tmp_key_buffer[i%4] = word;
+
+        if i % 4 == 0 && i != 0
+        {
+            output.push(tmp_key_buffer);
+        }
+    }
+
+    output
+}
+
+pub fn test()
+{
+    println!("{:?}", generate_keys());
 }

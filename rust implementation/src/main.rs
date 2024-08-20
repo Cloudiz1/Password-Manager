@@ -12,6 +12,7 @@ fn pretty_print(input: [[u8; 4]; 4])
 }
 
 fn main() {
+    rounds::test()
     // // mix columns testing
     // let test_input: [[u8; 4]; 4] = [
     //     [219, 242, 1, 198],
