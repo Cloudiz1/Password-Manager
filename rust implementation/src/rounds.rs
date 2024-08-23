@@ -3,6 +3,14 @@ use crate::states;
 use std::fs;
 extern crate hex;
 
+fn print_state_hex(input: [[u8; 4]; 4])
+{
+    for word in input
+    {
+        println!("{:02X?}", word);
+    }
+}
+
 fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
@@ -12,6 +20,8 @@ fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
         for column in 0..4
         {
             let index: usize = input[row][column].into();
+
+            // TODO: rewrite to not use hex crate
 
             let mut sub_byte = hex::decode(lookup::SBOX[index]);
 
@@ -210,7 +220,7 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
             let mut output: [u8; 4] = [b'\0'; 4];
             for (j, byte) in sub_bytes.iter().enumerate()
             {
-                output[j] = sub_bytes[j] ^ words[i-4][j];
+                output[j] = byte ^ words[i-4][j];
             }
 
             words.push(output);
@@ -227,23 +237,80 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
         }
     }
 
-    let mut output: Vec<[[u8; 4]; 4]> = vec![];
-
+    
+    let mut output_keys: Vec<[[u8; 4]; 4]> = vec![];
+    
     let mut tmp_key_buffer: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
     for (i, word) in words.into_iter().enumerate()
     {
-        tmp_key_buffer[i%4] = word;
-
-        if i % 4 == 0 && i != 0
+        for j in 0..4
         {
-            output.push(tmp_key_buffer);
+            tmp_key_buffer[j][i%4] = word[j];
+        }
+        
+        if (i + 1) % 4 == 0
+        {
+            output_keys.push(tmp_key_buffer);
         }
     }
+
+    output_keys
+}
+
+fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
+{
+    let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+    for i in 0..4
+    {
+        for j in 0..4
+        {
+            output[i][j] = input[i][j] ^ key[i][j];
+        }
+    } 
 
     output
 }
 
+fn encrypt_str(input: &str)
+{
+    let mut output: Vec<[[u8; 4]; 4]> = vec![];
+    let states = states::create_states(input);
+    let keys = generate_keys();
+
+    // let states: Vec<[[u8; 4]; 4]> = vec![[
+    //     [0x32, 0x88, 0x31, 0xe0],
+    //     [0x43, 0x5a, 0x31, 0x37],
+    //     [0xf6, 0x30, 0x98, 0x07],
+    //     [0xa8, 0x8d, 0xa2, 0x34],
+    // ]];
+
+    for state in &states
+    {
+        let mut cipher_text = add_round_key(*state, keys[0]);
+
+        for i in 1..10
+        {
+            cipher_text = sub_bytes(cipher_text, "normal");
+            cipher_text = shift_rows(cipher_text, "normal");
+            cipher_text = mix_columns(cipher_text, "normal");
+            cipher_text = add_round_key(cipher_text, keys[i]);
+        }
+
+        cipher_text = sub_bytes(cipher_text, "normal");
+        cipher_text = shift_rows(cipher_text, "normal");
+        cipher_text = add_round_key(cipher_text, keys[keys.len() - 1]);
+
+        output.push(cipher_text);
+    }
+
+    // print_state_hex(output[0]);
+    // TODO: format output as a string and return
+}
+
+// TODO: ecrypt and decrypt files
+
 pub fn test()
 {
-    println!("{:?}", generate_keys());
+    let test_input: &str = "abcdefghijklmnopqrstuvwxyz";
+    encrypt_str(test_input);
 }
