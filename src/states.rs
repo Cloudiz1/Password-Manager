@@ -47,12 +47,20 @@ pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]>
     states
 }
 
-// pub fn test() {
-//     // // tests creates_states()
-//     // let test_input: &str = "abcdefghijklmnopqrstuvwxyz";
-//     // println!("{:#?}", create_states(test_input));
+pub fn states_to_hex(input: Vec<[[u8; 4]; 4]>) -> String
+{
+    let mut output: String = "".to_owned();
+    for state in input
+    {
+        for column in 0..4
+        {
+            for row in 0..4
+            {
+                let byte_as_hex: String = format!("{:02X}", state[row][column]);
+                output += &byte_as_hex;
+            }
+        }
+    }
 
-//     // // tests just create_state()
-//     // let test_input: [char; 16] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p']; 
-//     // println!("{:?}", create_state(test_input));
-// }
+    output
+}

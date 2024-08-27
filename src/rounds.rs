@@ -1,15 +1,8 @@
 use crate::lookup;
 use crate::states;
 use std::fs;
+use std::str::from_utf8;
 extern crate hex;
-
-fn print_state_hex(input: [[u8; 4]; 4])
-{
-    for word in input
-    {
-        println!("{:02X?}", word);
-    }
-}
 
 fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
 {
@@ -244,7 +237,7 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
     for (i, word) in words.into_iter().enumerate()
     {
         for j in 0..4
-        {
+        { 
             tmp_key_buffer[j][i%4] = word[j];
         }
         
@@ -271,7 +264,7 @@ fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
     output
 }
 
-fn encrypt_str(input: &str)
+fn encrypt_str(input: &str) -> String
 {
     let mut output: Vec<[[u8; 4]; 4]> = vec![];
     let states = states::create_states(input);
@@ -303,14 +296,104 @@ fn encrypt_str(input: &str)
         output.push(cipher_text);
     }
 
-    // print_state_hex(output[0]);
-    // TODO: format output as a string and return
+    states::states_to_hex(output)
 }
 
-// TODO: ecrypt and decrypt files
+fn decrypt_str(input: String) -> String
+{
+    let mut output: Vec<[[u8; 4]; 4]> = vec![];
+
+    let mut states: Vec<[[u8; 4]; 4]> = vec![];
+    let mut tmp_array: [u8; 16] = [b'\0'; 16];
+    let mut buffer: String = String::new();
+    let mut count: usize = 0;
+
+    for (i, c) in input.chars().enumerate()
+    {
+        buffer.push(c);
+
+        if i % 2 != 0
+        {
+            let static_buffer = &*buffer;
+            tmp_array[count] = match u8::from_str_radix(static_buffer, 16)
+            {
+                Ok(v) => v,
+                Err(e) => panic!("Error converting hex to u8: {:?}", e)
+            };
+
+            buffer = "".to_string();
+
+            count += 1;
+        }
+
+        if count == 16
+        {
+            states.push(states::create_state(tmp_array));
+            count = 0;
+        }
+    }
+
+    let keys = generate_keys();
+    
+    for state in &states
+    {
+        let mut deciphered_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+
+        for (i, key) in keys.iter().rev().enumerate()
+        {
+            if i == 0
+            {
+                deciphered_state = add_round_key(*state, *key);
+                deciphered_state = shift_rows(deciphered_state, "inverse");
+                deciphered_state = sub_bytes(deciphered_state, "inverse");
+            }
+            else if i > 0 && i < 10
+            {
+                deciphered_state = add_round_key(deciphered_state, *key);
+                deciphered_state = mix_columns(deciphered_state, "inverse");
+                deciphered_state = shift_rows(deciphered_state, "inverse");
+                deciphered_state = sub_bytes(deciphered_state, "inverse");
+            }
+            else
+            {
+                deciphered_state = add_round_key(deciphered_state, *key);
+            }
+        }
+
+        
+        output.push(deciphered_state);
+    }
+    
+    let mut byte_array: Vec<u8> = vec![];
+
+    for state in output
+    {
+        for column in 0..4
+        {
+            for row in 0..4
+            {
+                byte_array.push(state[row][column]);
+            }
+        }
+    }
+
+    // removes the extra padding
+    if byte_array[byte_array.len() - 1] <= 16
+    {
+        for _i in 1..byte_array[byte_array.len() - 1] + 1
+        {
+            byte_array.pop();
+        }
+    }
+
+    from_utf8(&byte_array).unwrap().to_string()
+}
 
 pub fn test()
 {
-    let test_input: &str = "abcdefghijklmnopqrstuvwxyz";
-    encrypt_str(test_input);
+    let test_input: &str = "abcdefghijklMNopqrstuvwxyz";
+    let cipher_text: String = encrypt_str(test_input);
+    println!("{:?}", decrypt_str(cipher_text));
 }
+
+// Todo: possibly turn this into a CBC mode of operation as well (shouldn't be too hard in theory? Although I would have to convert encrypting strings into encrypting files?? or maybe just encrypt all the strings at once?? idk man) 
