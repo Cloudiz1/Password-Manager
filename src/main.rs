@@ -1,6 +1,7 @@
 mod states;
 mod rounds;
 mod lookup;
+mod egui;
 
 // for printing 2d arrays
 fn pretty_print(input: [[u8; 4]; 4])
@@ -12,7 +13,7 @@ fn pretty_print(input: [[u8; 4]; 4])
 }
 
 fn main() {
-    rounds::test()
+    egui::test();
     // // mix columns testing
     // let test_input: [[u8; 4]; 4] = [
     //     [219, 242, 1, 198],
