@@ -2,15 +2,16 @@ mod states;
 mod rounds;
 mod lookup;
 mod egui;
+mod login;
 
-// for printing 2d arrays
-fn pretty_print(input: [[u8; 4]; 4])
-{
-    for row in input
-    {
-        println!("{:?}", row);
-    }
-}
+// // for printing 2d arrays
+// fn pretty_print(input: [[u8; 4]; 4])
+// {
+//     for row in input
+//     {
+//         println!("{:?}", row);
+//     }
+// }
 
 fn main() {
     egui::test();

@@ -266,7 +266,7 @@ fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
 
 fn encrypt_str(input: &str) -> String
 {
-    let mut output: Vec<[[u8; 4]; 4]> = vec![];
+    let mut output: Vec<[[u8; 4]; 4]> = vec![]; 
     let states = states::create_states(input);
     let keys = generate_keys();
 
