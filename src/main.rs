@@ -1,5 +1,5 @@
 mod states;
-mod rounds;
+mod cipher;
 mod lookup;
 mod egui;
 mod login;
@@ -14,7 +14,7 @@ mod login;
 // }
 
 fn main() {
-    egui::test();
+    egui::run();
     // // mix columns testing
     // let test_input: [[u8; 4]; 4] = [
     //     [219, 242, 1, 198],

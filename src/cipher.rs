@@ -264,7 +264,7 @@ fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
     output
 }
 
-fn encrypt_str(input: &str) -> String
+pub fn encrypt_str(input: &str) -> String
 {
     let mut output: Vec<[[u8; 4]; 4]> = vec![]; 
     let states = states::create_states(input);
@@ -299,7 +299,7 @@ fn encrypt_str(input: &str) -> String
     states::states_to_hex(output)
 }
 
-fn decrypt_str(input: String) -> String
+pub fn decrypt_str(input: String) -> String
 {
     let mut output: Vec<[[u8; 4]; 4]> = vec![];
 
@@ -389,11 +389,45 @@ fn decrypt_str(input: String) -> String
     from_utf8(&byte_array).unwrap().to_string()
 }
 
-pub fn test()
-{
-    let test_input: &str = "abcdefghijklMNopqrstuvwxyz";
-    let cipher_text: String = encrypt_str(test_input);
-    println!("{:?}", decrypt_str(cipher_text));
-}
+// pub fn write_file(input: String, file_path: &str) 
+// {
+// 	match fs::write(file_path, input.as_bytes())
+// 	{
+// 		Ok(v) => v,
+// 		Err(e) => println!("{:?}", e)
+// 	}
+// }
+
+// pub fn test()
+// {
+// 	// const LOGIN_PATH: &str = "logins.json";
+// 	// let mut file = match fs::File::open(LOGIN_PATH)
+//     // {
+//     //     Ok(v) => v,
+//     //     Err(e) => panic!("{:?}", e)
+//     // };
+
+// 	// let mut contents = "".to_owned();
+// 	// match file.read_to_string(&mut contents)
+// 	// {
+// 	// 	Ok(v) => v,
+// 	// 	Err(e) => panic!("{:?}", e)
+// 	// };
+	
+// 	// drop(file);
+	
+// 	// let content_slice: &str = &contents[..];
+// 	// write_file(content_slice, LOGIN_PATH);
+	
+	
+// 	const LOGIN_PATH: &str = "logins.txt";
+// 	let contents = fs::read_to_string(LOGIN_PATH).unwrap();
+// 	// let contents_slice: &str = &contents[..];
+// 	write_file(contents, LOGIN_PATH); 
+
+//     // let test_input: &str = "abcdefghijklMNopqrstuvwxyz";
+//     // let cipher_text: String = encrypt_str(test_input);
+//     // println!("{:?}", decrypt_str(cipher_text));
+// }
 
 // Todo: possibly turn this into a CBC mode of operation as well (shouldn't be too hard in theory? Although I would have to convert encrypting strings into encrypting files?? or maybe just encrypt all the strings at once?? idk man) 

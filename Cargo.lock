@@ -2057,6 +2057,7 @@ dependencies = [
  "eframe",
  "egui",
  "hex",
+ "serde",
  "serde_json",
 ]
 
