@@ -1,5 +1,4 @@
 target
 src/key.txt
-src/egui.rs
 logins.txt
 tmp.txt
