@@ -155,7 +155,7 @@ fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
     output
 }
 
-const KEY_PATH: &str = "src/key.txt";
+const KEY_PATH: &str = "database/key.txt";
 fn generate_keys() -> Vec<[[u8; 4]; 4]>
 {
     let key = match fs::read_to_string(KEY_PATH)

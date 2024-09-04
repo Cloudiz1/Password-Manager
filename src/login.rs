@@ -7,7 +7,7 @@ use crate::cipher;
 // complete add_new_login: DONE
 // encrpyt
 
-pub const LOGIN_PATH: &str = "logins.txt";
+pub const LOGIN_PATH: &str = "database/logins.txt";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Login {

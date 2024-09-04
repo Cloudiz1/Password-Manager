@@ -33,6 +33,8 @@ impl Default for MyApp {
     }
 }
 
+// TODO: rewrite this to work with grid
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -59,6 +61,24 @@ impl eframe::App for MyApp {
 					// println!("{:?}", self.logins);
 					// login::add_new_login(self.new_login.username.clone(), self.new_login.password.clone());
 				}
+
+                // paint a rect behind this
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    let rect = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(20.0, 20.0));
+
+                    let frame = egui::Frame::none()
+                    .fill(egui::Color32::WHITE)
+                    .paint(rect);
+
+                    ui.painter().add(frame);
+                    
+                });
+
+                // let logins_frame = egui::Frame::none()
+                // .fill(egui::Color32::BLACK)
+                // .paint(logins_container);
+
+                // ui.painter().add(logins_frame);
             });
         });
     }
