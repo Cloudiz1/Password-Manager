@@ -11,8 +11,10 @@ pub const LOGIN_PATH: &str = "database/logins.txt";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Login {
+	pub application: String,
 	pub username: String,
-	pub password: String
+	pub password: String,
+	pub id: i32
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,8 +48,8 @@ pub fn test()
 	// println!("{:?}", logins.all_logins[0].username);
 	
 
-	// let content: String = fs::read_to_string("tmp.txt").unwrap();
-	// let content_slice: &str = &content[..];
-	// let encrypted_text: String = cipher::encrypt_str(content_slice);
-	// fs::write("logins.txt", encrypted_text.as_bytes());
+	let content: String = fs::read_to_string("tmp.txt").unwrap();
+	let content_slice: &str = &content[..];
+	let encrypted_text: String = cipher::encrypt_str(content_slice);
+	fs::write("logins.txt", encrypted_text.as_bytes());
 }

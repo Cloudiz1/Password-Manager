@@ -1,5 +1,6 @@
 use eframe::egui;
 use std::mem::swap;
+use std::format;
 use crate::login;
 
 pub fn run() -> eframe::Result {
@@ -26,8 +27,10 @@ impl Default for MyApp {
         Self {
             logins: login::get_logins(),
             new_login: login::Login {
+            	application: "".to_string(),
             	username: "".to_string(),
-             	password: "".to_string()
+             	password: "".to_string(),
+              	id: 0
             }
         }
     }
@@ -41,38 +44,54 @@ impl eframe::App for MyApp {
             ui.vertical(|ui| {
             
 				ui.label("Enter new login information: ");
+				ui.add(egui::TextEdit::singleline(&mut self.new_login.application).hint_text("Application Name: "));
              	ui.add(egui::TextEdit::singleline(&mut self.new_login.username).hint_text("Username: "));
               	ui.add(egui::TextEdit::singleline(&mut self.new_login.password).hint_text("Password: "));
                
 				if ui.add(egui::Button::new("Add New Login")).clicked() {
 					let new_login = login::Login {
+						application: self.new_login.application.clone(),
 						username: self.new_login.username.clone(),
-						password: self.new_login.password.clone()
+						password: self.new_login.password.clone(),
+						id: self.logins.all_logins[self.logins.all_logins.len() - 1].id + 1
 					};
 					
-					self.logins.all_logins.push(new_login);
-					let mut buffer = login::Logins {
-						all_logins: Vec::new()
-					};
+					if new_login.application == "".to_string() || new_login.username == "".to_string() || new_login.password == "".to_string() {
+						println!("Missing input.");
+					}
 					
-					swap(&mut buffer, &mut self.logins);
-					
-					login::write_logins(buffer);
+					else
+					{
+						// println!("{:?}", new_login);
+						
+						self.logins.all_logins.push(new_login);
+						let mut buffer = login::Logins {
+							all_logins: Vec::new()
+						};
+						
+						swap(&mut buffer, &mut self.logins);
+						
+						login::write_logins(buffer);
+					}
 					// println!("{:?}", self.logins);
 					// login::add_new_login(self.new_login.username.clone(), self.new_login.password.clone());
 				}
 
                 // paint a rect behind this
+                
+                ui.label(""); // empty space
+                
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    let rect = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(20.0, 20.0));
-
-                    let frame = egui::Frame::none()
-                    .fill(egui::Color32::WHITE)
-                    .paint(rect);
-
-                    ui.painter().add(frame);
-                    
+                	for credential in self.logins.all_logins.iter() {
+                 		ui.label(format!("application: {}", credential.application));
+                 		ui.label(format!("username: {}", credential.username));
+                   		ui.label(format!("password: {}", credential.password));
+                     	ui.label(format!("id: {}", credential.id));
+                     	ui.label("");
+                 	}
                 });
+                
+                
 
                 // let logins_frame = egui::Frame::none()
                 // .fill(egui::Color32::BLACK)

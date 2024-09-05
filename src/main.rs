@@ -15,6 +15,10 @@ mod login;
 
 fn main() {
     egui::run();
+    // login::test();
+    
+    
+    
     // // mix columns testing
     // let test_input: [[u8; 4]; 4] = [
     //     [219, 242, 1, 198],

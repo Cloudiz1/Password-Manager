@@ -1,12 +1,16 @@
 {
 	"all_logins": [
 		{
+			"application": "Microsoft frfr",
 			"username": "username1",
-			"password": "password1"
+			"password": "password1",
+			"id": 0
 		},
 		{
+			"application": "Not Microsoft frfr",
 			"username": "username2",
-			"password": "password2"
+			"password": "password2",
+			"id": 1
 		}
 	]
 }
