@@ -9,15 +9,15 @@ use crate::cipher;
 
 pub const LOGIN_PATH: &str = "database/logins.txt";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Login {
 	pub application: String,
 	pub username: String,
 	pub password: String,
-	pub id: i32
+	pub id: usize
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Logins {
 	pub all_logins: Vec<Login>
 }

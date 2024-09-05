@@ -6,7 +6,8 @@
 - another box for application name (done)
 - better visuals to display credentials
 - maybe a confirmation to display credentials
-- delete button
+- delete button (done)
+- fix credentials not live updating on logins.txt rewrite
 
 ## for backend
 - add cbc mode of operation

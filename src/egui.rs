@@ -60,8 +60,7 @@ impl eframe::App for MyApp {
 						println!("Missing input.");
 					}
 					
-					else
-					{
+					else {
 						// println!("{:?}", new_login);
 						
 						self.logins.all_logins.push(new_login);
@@ -81,15 +80,26 @@ impl eframe::App for MyApp {
                 
                 ui.label(""); // empty space
                 
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                	for credential in self.logins.all_logins.iter() {
+                let logins_container = egui::ScrollArea::vertical().show(ui, |ui| {
+                	for credential in self.logins.all_logins.clone() {
                  		ui.label(format!("application: {}", credential.application));
                  		ui.label(format!("username: {}", credential.username));
                    		ui.label(format!("password: {}", credential.password));
                      	ui.label(format!("id: {}", credential.id));
-                     	ui.label("");
+                      	if ui.add(egui::Button::new("delete credentials")).clicked() {
+                       		self.logins.all_logins.swap_remove(credential.id);
+                         
+                         	let mut buffer = login::Logins {
+                          		all_logins: Vec::new()
+                          	};
+						
+                          	swap(&mut buffer, &mut self.logins);
+						
+                           	login::write_logins(buffer);
+                       	}
                  	}
                 });
+                
                 
                 
 
