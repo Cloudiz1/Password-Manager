@@ -36,6 +36,14 @@ impl Default for MyApp {
     }
 }
 
+impl MyApp {
+	fn update_ids(&mut self) {
+		for i in 0..self.logins.all_logins.len() {
+			self.logins.all_logins[i].id = i as usize;
+		}
+	}
+}
+
 // TODO: rewrite this to work with grid
 
 impl eframe::App for MyApp {
@@ -53,7 +61,8 @@ impl eframe::App for MyApp {
 						application: self.new_login.application.clone(),
 						username: self.new_login.username.clone(),
 						password: self.new_login.password.clone(),
-						id: self.logins.all_logins[self.logins.all_logins.len() - 1].id + 1
+						id: 0 	// placeholder; cant get accurate id if .all_logins is empty
+								// instead, just calling self.update_ids();
 					};
 					
 					if new_login.application == "".to_string() || new_login.username == "".to_string() || new_login.password == "".to_string() {
@@ -71,6 +80,9 @@ impl eframe::App for MyApp {
 						swap(&mut buffer, &mut self.logins);
 						
 						login::write_logins(buffer);
+						self.logins = login::get_logins();
+
+						self.update_ids();
 					}
 					// println!("{:?}", self.logins);
 					// login::add_new_login(self.new_login.username.clone(), self.new_login.password.clone());
@@ -80,27 +92,35 @@ impl eframe::App for MyApp {
                 
                 ui.label(""); // empty space
                 
-                let logins_container = egui::ScrollArea::vertical().show(ui, |ui| {
-                	for credential in self.logins.all_logins.clone() {
-                 		ui.label(format!("application: {}", credential.application));
-                 		ui.label(format!("username: {}", credential.username));
-                   		ui.label(format!("password: {}", credential.password));
-                     	ui.label(format!("id: {}", credential.id));
-                      	if ui.add(egui::Button::new("delete credentials")).clicked() {
-                       		self.logins.all_logins.swap_remove(credential.id);
-                         
-                         	let mut buffer = login::Logins {
-                          		all_logins: Vec::new()
-                          	};
-						
-                          	swap(&mut buffer, &mut self.logins);
-						
-                           	login::write_logins(buffer);
-                       	}
-                 	}
-                });
-                
-                
+				let logins_container = egui::ScrollArea::vertical()
+					.auto_shrink([false; 2])
+					.max_width(285.0);
+
+				logins_container.show(ui, |ui| {
+					for credential in self.logins.all_logins.clone() {
+						ui.label(format!("application: {}", credential.application));
+						ui.label(format!("username: {}", credential.username));
+						ui.label(format!("password: {}", credential.password));
+						ui.label(format!("id: {}", credential.id));
+
+						if ui.add(egui::Button::new("delete credentials")).clicked() {
+							self.logins.all_logins.swap_remove(credential.id);
+
+							let mut buffer = login::Logins {
+								all_logins: Vec::new()
+							};
+
+							swap(&mut buffer, &mut self.logins);
+
+							login::write_logins(buffer);
+							self.logins = login::get_logins();
+
+							self.update_ids();
+						}
+
+						ui.label("");
+					}
+				});
                 
 
                 // let logins_frame = egui::Frame::none()
