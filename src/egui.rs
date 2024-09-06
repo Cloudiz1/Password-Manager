@@ -19,7 +19,8 @@ pub fn run() -> eframe::Result {
 
 struct MyApp {
     logins: login::Logins,
-    new_login: login::Login
+    new_login: login::Login,
+    show_login: bool
 }
 
 impl Default for MyApp {
@@ -31,7 +32,8 @@ impl Default for MyApp {
             	username: "".to_string(),
              	password: "".to_string(),
               	id: 0
-            }
+            },
+            show_login: false
         }
     }
 }
@@ -44,91 +46,88 @@ impl MyApp {
 	}
 }
 
-// TODO: rewrite this to work with grid
-
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::SidePanel::left("add_new_login_form")
+            .exact_width(325.0)
+            .resizable(false)
+            .show(ctx, |ui| {
+            ui.vertical(|ui| {
+                ui.label("Enter new login information: ");
+                ui.add(egui::TextEdit::singleline(&mut self.new_login.application).hint_text("Application Name: "));
+                ui.add(egui::TextEdit::singleline(&mut self.new_login.username).hint_text("Username: "));
+                ui.add(egui::TextEdit::singleline(&mut self.new_login.password).hint_text("Password: "));
+                
+                ui.horizontal(|ui| {
+                    if ui.add(egui::Button::new("Add New Login")).clicked() {
+                        let new_login = login::Login {
+                            application: self.new_login.application.clone(),
+                            username: self.new_login.username.clone(),
+                            password: self.new_login.password.clone(),
+                            id: 0 	// placeholder; cant get accurate id if .all_logins is empty
+                                    // instead, just calling self.update_ids();
+                        };
+                        
+                        if new_login.application == "".to_string() || new_login.username == "".to_string() || new_login.password == "".to_string() {
+                            println!("Missing input.");
+                        }
+                        
+                        else {
+                            self.logins.all_logins.push(new_login);
+                            let mut buffer = login::Logins {
+                                all_logins: Vec::new()
+                            };
+                            
+                            swap(&mut buffer, &mut self.logins);
+                            
+                            login::write_logins(buffer);
+                            self.logins = login::get_logins();
+        
+                            self.update_ids();
+                        }
+                    }
+
+                    ui.add_space(65.0);
+                    
+                    ui.checkbox(&mut self.show_login, "Display credentials");
+                })
+            });
+        });
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
-            
-				ui.label("Enter new login information: ");
-				ui.add(egui::TextEdit::singleline(&mut self.new_login.application).hint_text("Application Name: "));
-             	ui.add(egui::TextEdit::singleline(&mut self.new_login.username).hint_text("Username: "));
-              	ui.add(egui::TextEdit::singleline(&mut self.new_login.password).hint_text("Password: "));
-               
-				if ui.add(egui::Button::new("Add New Login")).clicked() {
-					let new_login = login::Login {
-						application: self.new_login.application.clone(),
-						username: self.new_login.username.clone(),
-						password: self.new_login.password.clone(),
-						id: 0 	// placeholder; cant get accurate id if .all_logins is empty
-								// instead, just calling self.update_ids();
-					};
-					
-					if new_login.application == "".to_string() || new_login.username == "".to_string() || new_login.password == "".to_string() {
-						println!("Missing input.");
-					}
-					
-					else {
-						// println!("{:?}", new_login);
-						
-						self.logins.all_logins.push(new_login);
-						let mut buffer = login::Logins {
-							all_logins: Vec::new()
-						};
-						
-						swap(&mut buffer, &mut self.logins);
-						
-						login::write_logins(buffer);
-						self.logins = login::get_logins();
+                if self.show_login {
+                    let logins_container = egui::ScrollArea::vertical()
+                    .auto_shrink([false; 2])
+                    .max_width(f32::INFINITY)
+                    .max_height(ui.available_height());
 
-						self.update_ids();
-					}
-					// println!("{:?}", self.logins);
-					// login::add_new_login(self.new_login.username.clone(), self.new_login.password.clone());
-				}
+                    logins_container.show(ui, |ui| {
+                        for credential in self.logins.all_logins.clone() {
+                            ui.label(format!("application: {}", credential.application));
+                            ui.label(format!("username: {}", credential.username));
+                            ui.label(format!("password: {}", credential.password));
 
-                // paint a rect behind this
-                
-                ui.label(""); // empty space
-                
-				let logins_container = egui::ScrollArea::vertical()
-					.auto_shrink([false; 2])
-					.max_width(285.0);
+                            if ui.add(egui::Button::new("delete credentials")).clicked() {
+                                self.logins.all_logins.swap_remove(credential.id);
 
-				logins_container.show(ui, |ui| {
-					for credential in self.logins.all_logins.clone() {
-						ui.label(format!("application: {}", credential.application));
-						ui.label(format!("username: {}", credential.username));
-						ui.label(format!("password: {}", credential.password));
-						ui.label(format!("id: {}", credential.id));
+                                let mut buffer = login::Logins {
+                                    all_logins: Vec::new()
+                                };
+                                
+                                swap(&mut buffer, &mut self.logins);
 
-						if ui.add(egui::Button::new("delete credentials")).clicked() {
-							self.logins.all_logins.swap_remove(credential.id);
+                                login::write_logins(buffer);
+                                self.logins = login::get_logins();
 
-							let mut buffer = login::Logins {
-								all_logins: Vec::new()
-							};
-
-							swap(&mut buffer, &mut self.logins);
-
-							login::write_logins(buffer);
-							self.logins = login::get_logins();
-
-							self.update_ids();
-						}
-
-						ui.label("");
-					}
-				});
-                
-
-                // let logins_frame = egui::Frame::none()
-                // .fill(egui::Color32::BLACK)
-                // .paint(logins_container);
-
-                // ui.painter().add(logins_frame);
-            });
+                                self.update_ids();
+                            }
+                            
+                            ui.add_space(8.0);
+                        }
+                    });
+                }
+            })
         });
     }
 }

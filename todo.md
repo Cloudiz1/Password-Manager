@@ -1,11 +1,11 @@
-## for "json" file
+## for "json" file (done)
 - add an id system (done)
 - add an app name for each credential (done)
 
-## for egui front end
+## for egui front end (done)
 - another box for application name (done)
-- better visuals to display credentials
-- maybe a confirmation to display credentials
+- better visuals to display credentials (done)
+- maybe a confirmation to display credentials (should be a checkbox i think so its toggleable) (done)
 - delete button (done)
 - fix credentials not live updating on logins.txt rewrite (done)
 
