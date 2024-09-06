@@ -3,6 +3,7 @@ mod cipher;
 mod lookup;
 mod egui;
 mod login;
+mod sha256;
 
 // // for printing 2d arrays
 // fn pretty_print(input: [[u8; 4]; 4])
