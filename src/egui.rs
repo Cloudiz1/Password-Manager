@@ -74,17 +74,6 @@ impl eframe::App for MyApp {
                                 egui::Stroke::new(2.0, egui::Color32::BLACK)
                             );
 
-                            let ellipse = egui::EllipseShape {
-                                
-                            }
-
-                            ui.add(egui::Shape::Ellipse::new(
-                                egui::Pos2::new(100.0, 100.0),
-                                egui::Vec2::new(15.0, 30.0),
-                                egui::Color32::WHITE,
-                                egui::Stroke::new(2.0, egui::Color32::WHITE)
-                        ));
-
                             ui.add_space(175.0);
                             
                             ui.add(egui::TextEdit::singleline(&mut self.sign_in_password).hint_text("Password:"));

@@ -155,6 +155,29 @@ fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
     output
 }
 
+fn key_to_state(key: &str) -> [[u8; 4]; 4] {
+    let mut return_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+    let mut tmp: String = String::new();
+
+    for (i, c) in key.chars().enumerate()
+    {
+        tmp.push(c);
+
+        if i % 2 != 0
+        {
+            return_state[((i-1)/2)/4][((i-1)/2)%4] = match u8::from_str_radix(&tmp, 16) 
+            {
+                Ok(v) => v,
+                Err(e) => panic!("Error converting hex to u8: {:?}", e)
+            };
+            
+            tmp = "".to_string();
+        }
+    }   
+
+    return_state
+}
+
 const KEY_PATH: &str = "database/key.txt";
 fn generate_keys() -> Vec<[[u8; 4]; 4]>
 {
@@ -164,24 +187,7 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
         Err(e) => panic!("failed to read file: {:?}", e)
     };
 
-    let mut org_key_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
-    let mut tmp: String = String::new();
-
-    for (i, c) in key.chars().enumerate()
-    {
-        tmp.push(c);
-
-        if i % 2 != 0
-        {
-            org_key_state[((i-1)/2)/4][((i-1)/2)%4] = match u8::from_str_radix(&tmp, 16) // fills org key state with key
-            {
-                Ok(v) => v,
-                Err(e) => panic!("Error converting hex to u8: {:?}", e)
-            };
-            
-            tmp = "".to_string();
-        }
-    }   
+    let mut org_key_state = key_to_state(&key);
 
     let mut words: Vec<[u8; 4]> = vec![];
 
@@ -250,7 +256,7 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
     output_keys
 }
 
-fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
+fn xor_state(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
 {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
     for i in 0..4
@@ -264,11 +270,21 @@ fn add_round_key(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
     output
 }
 
+const IV_PATH: &str = "database/IV.txt";
 pub fn encrypt_str(input: &str) -> String
 {
     let mut output: Vec<[[u8; 4]; 4]> = vec![]; 
-    let states = states::create_states(input);
+    let mut states = states::create_states(input);
     let keys = generate_keys();
+
+    let IV_string = match fs::read_to_string(IV_PATH) {
+        Ok(v) => v,
+        Err(e) => panic!("failed to read file: {:?}", e)
+    };
+
+    let IV = key_to_state(&IV_string);
+
+    states[0] = xor_state(states[0], IV);
 
     // let states: Vec<[[u8; 4]; 4]> = vec![[
     //     [0x32, 0x88, 0x31, 0xe0],
@@ -277,21 +293,25 @@ pub fn encrypt_str(input: &str) -> String
     //     [0xa8, 0x8d, 0xa2, 0x34],
     // ]];
 
-    for state in &states
+    for (state_number, mut state) in states.into_iter().enumerate()
     {
-        let mut cipher_text = add_round_key(*state, keys[0]);
+        if state_number != 0 {
+            state = xor_state(state, output[state_number - 1]);
+        }
+
+        let mut cipher_text = xor_state(state, keys[0]);
 
         for i in 1..10
         {
             cipher_text = sub_bytes(cipher_text, "normal");
             cipher_text = shift_rows(cipher_text, "normal");
             cipher_text = mix_columns(cipher_text, "normal");
-            cipher_text = add_round_key(cipher_text, keys[i]);
+            cipher_text = xor_state(cipher_text, keys[i]);
         }
 
         cipher_text = sub_bytes(cipher_text, "normal");
         cipher_text = shift_rows(cipher_text, "normal");
-        cipher_text = add_round_key(cipher_text, keys[keys.len() - 1]);
+        cipher_text = xor_state(cipher_text, keys[keys.len() - 1]);
 
         output.push(cipher_text);
     }
@@ -335,7 +355,8 @@ pub fn decrypt_str(input: String) -> String
 
     let keys = generate_keys();
     
-    for state in &states
+    let mut previous_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
+    for (state_number, state) in states.into_iter().enumerate()
     {
         let mut deciphered_state: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
@@ -343,28 +364,41 @@ pub fn decrypt_str(input: String) -> String
         {
             if i == 0
             {
-                deciphered_state = add_round_key(*state, *key);
+                deciphered_state = xor_state(state, *key);
                 deciphered_state = shift_rows(deciphered_state, "inverse");
                 deciphered_state = sub_bytes(deciphered_state, "inverse");
             }
             else if i > 0 && i < 10
             {
-                deciphered_state = add_round_key(deciphered_state, *key);
+                deciphered_state = xor_state(deciphered_state, *key);
                 deciphered_state = mix_columns(deciphered_state, "inverse");
                 deciphered_state = shift_rows(deciphered_state, "inverse");
                 deciphered_state = sub_bytes(deciphered_state, "inverse");
             }
             else
             {
-                deciphered_state = add_round_key(deciphered_state, *key);
+                deciphered_state = xor_state(deciphered_state, *key);
             }
         }
 
+        if state_number != 0 {
+            deciphered_state = xor_state(deciphered_state, previous_state);
+        }
+
+        previous_state = state;
         
         output.push(deciphered_state);
     }
     
     let mut byte_array: Vec<u8> = vec![];
+
+    let IV_string = match fs::read_to_string(IV_PATH) {
+        Ok(v) => v,
+        Err(e) => panic!("failed to read file: {:?}", e)
+    };
+
+    let IV = key_to_state(&IV_string);
+    output[0] = xor_state(output[0], IV);
 
     for state in output
     {
@@ -400,6 +434,12 @@ pub fn decrypt_str(input: String) -> String
 
 // pub fn test()
 // {
+//     let cipher_text = encrypt_str("abcdefghijklmnopqrstuvwxyz");
+//     println!("{:?}", cipher_text);
+//     let plain_text = decrypt_str(cipher_text);
+//     println!("{:?}", plain_text);
+
+
 // 	// const LOGIN_PATH: &str = "logins.json";
 // 	// let mut file = match fs::File::open(LOGIN_PATH)
 //     // {
@@ -420,14 +460,12 @@ pub fn decrypt_str(input: String) -> String
 // 	// write_file(content_slice, LOGIN_PATH);
 	
 	
-// 	const LOGIN_PATH: &str = "logins.txt";
-// 	let contents = fs::read_to_string(LOGIN_PATH).unwrap();
-// 	// let contents_slice: &str = &contents[..];
-// 	write_file(contents, LOGIN_PATH); 
+// 	// const LOGIN_PATH: &str = "logins.txt";
+// 	// let contents = fs::read_to_string(LOGIN_PATH).unwrap();
+// 	// // let contents_slice: &str = &contents[..];
+// 	// write_file(contents, LOGIN_PATH); 
 
 //     // let test_input: &str = "abcdefghijklMNopqrstuvwxyz";
 //     // let cipher_text: String = encrypt_str(test_input);
 //     // println!("{:?}", decrypt_str(cipher_text));
 // }
-
-// Todo: possibly turn this into a CBC mode of operation as well (shouldn't be too hard in theory? Although I would have to convert encrypting strings into encrypting files?? or maybe just encrypt all the strings at once?? idk man) 

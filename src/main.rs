@@ -17,6 +17,7 @@ mod sha256;
 fn main() {
     egui::run();
     // login::test();
+    // cipher::test();
     
     
     
