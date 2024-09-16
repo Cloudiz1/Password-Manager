@@ -15,10 +15,10 @@ mod sha256;
 // }
 
 fn main() {
-    egui::run();
+    // egui::run();
     // login::test();
     // cipher::test();
-    
+    sha256::test();
     
     
     // // mix columns testing
