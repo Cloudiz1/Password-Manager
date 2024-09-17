@@ -1,6 +1,7 @@
 use eframe::egui;
 use std::mem::swap;
 use std::format;
+use std::fs;
 use crate::login;
 use crate::sha256;
 
@@ -23,7 +24,9 @@ struct MyApp {
     logins: login::Logins,
     new_login: login::Login,
     show_login: bool,
-    sign_in_password: String
+    sign_in_password: String,
+    new_password: String,
+    confirm_password: String
 }
 
 impl Default for MyApp {
@@ -38,7 +41,9 @@ impl Default for MyApp {
               	id: 0
             },
             show_login: false,
-            sign_in_password: "".to_owned()
+            sign_in_password: "".to_owned(),
+            new_password: "".to_owned(),
+            confirm_password: "".to_owned()
         }
     }
 }
@@ -130,7 +135,24 @@ impl eframe::App for MyApp {
                             ui.add_space(65.0);
                             
                             ui.checkbox(&mut self.show_login, "Display credentials");
-                        })
+                        });
+
+                        ui.add_space(20.0);
+
+                        ui.label("Change password: ");
+                        ui.add(egui::TextEdit::singleline(&mut self.new_password).hint_text("New password: "));
+                        ui.add(egui::TextEdit::singleline(&mut self.confirm_password).hint_text("Confirm password: "));
+
+                        if ui.add(egui::Button::new("Change Password")).clicked() {
+                            if self.new_password == self.confirm_password {
+                                let hashed_password = sha256::hash(self.new_password.clone()).clone();
+                                fs::write("database/password.txt", hashed_password.as_bytes());
+                                println!("Password successfully changed.");
+                            }
+                            else {
+                                println!("Passwords do not match.");
+                            }
+                        };
                     });
                 });
         
