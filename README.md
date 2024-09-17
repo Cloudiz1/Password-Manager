@@ -19,3 +19,5 @@ Simply run `cargo run` to start.
 - edit credentials instead of deleting and remaking them
 - finish that ugly login screen lol
 - make errors and prompts pop on screen instead of in a terminal
+- remove hex crate
+- get rid of my SEVENTEEN WARNINGS LOL
