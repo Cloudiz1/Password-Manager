@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 eframe = "0.28.1"
 egui = "0.28.1"
-hex = "0.4.3"
 rand = "0.8.5"
 serde = "1.0.209"
 serde_derive = "1.0.210"

@@ -1,5 +1,4 @@
-pub fn create_state (input: [u8; 16]) -> [[u8; 4]; 4]
-{
+pub fn create_state (input: [u8; 16]) -> [[u8; 4]; 4] {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4]; 
 
     let mut i: usize = 0;
@@ -13,8 +12,7 @@ pub fn create_state (input: [u8; 16]) -> [[u8; 4]; 4]
     output
 }
 
-pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]>
-{
+pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]> {
     let mut states: Vec<[[u8; 4]; 4]> = vec![];
     let mut char_buffer: [u8; 16] = [b'\0'; 16];
 
@@ -47,9 +45,8 @@ pub fn create_states (input: &str) -> Vec<[[u8; 4]; 4]>
     states
 }
 
-pub fn states_to_hex(input: Vec<[[u8; 4]; 4]>) -> String
-{
-    let mut output: String = "".to_owned();
+pub fn states_to_hex(input: Vec<[[u8; 4]; 4]>) -> String {
+    let mut output: String = "".to_string();
     for state in input
     {
         for column in 0..4

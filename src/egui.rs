@@ -1,7 +1,7 @@
 use eframe::egui;
+use std::{format, fs, thread};
 use std::mem::swap;
-use std::format;
-use std::fs;
+use std::time::Duration;
 use crate::login;
 use crate::sha256;
 
@@ -13,7 +13,7 @@ pub fn run() -> eframe::Result {
     eframe::run_native(
         "Password Manager",
         options,
-        Box::new(|cc| {
+        Box::new(|_cc| {
             Ok(Box::<MyApp>::default())
         }),
     )
@@ -26,7 +26,10 @@ struct MyApp {
     show_login: bool,
     sign_in_password: String,
     new_password: String,
-    confirm_password: String
+    confirm_password: String,
+    show_message: bool,
+    currently_showing_message: bool,
+    message: String
 }
 
 impl Default for MyApp {
@@ -41,9 +44,12 @@ impl Default for MyApp {
               	id: 0
             },
             show_login: false,
-            sign_in_password: "".to_owned(),
-            new_password: "".to_owned(),
-            confirm_password: "".to_owned()
+            sign_in_password: "".to_string(),
+            new_password: "".to_string(),
+            confirm_password: "".to_string(),
+            show_message: false,
+            currently_showing_message: false,
+            message: "".to_string()
         }
     }
 }
@@ -56,29 +62,44 @@ impl MyApp {
 	}
 }
 
+impl MyApp {
+    fn attempt_show_message(&mut self, ui: &mut egui::Ui) {
+        if self.show_message {
+            // put this in a nice looking place
+            // ui.heading(self.message.clone());
+
+            let window_height = ui.available_height();
+            let pos = egui::Pos2::new(10.0, window_height);
+            ui.painter().text(pos, egui::Align2::LEFT_BOTTOM, self.message.clone(), egui::FontId::default(), egui::Color32::GRAY);
+
+            if self.currently_showing_message {
+                thread::sleep(Duration::from_secs(1));
+                self.show_message = false;
+                self.currently_showing_message = false;
+            }
+            else {
+                self.currently_showing_message = true;
+            }
+        }
+    }
+}
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         match self.scene {
             0 => {
                 egui::CentralPanel::default().show(ctx, |ui| {
+                    self.attempt_show_message(ui);
                     ui.vertical(|ui| {
-                        ui.add_space(285.0);
+                        ui.add_space(215.0);
                         ui.horizontal(|ui| {
-                        
-                            ui.painter().circle(
-                                egui::Pos2::new(350.0, 170.0),
-                                75.0,
-                                egui::Color32::DARK_GRAY,
-                                egui::Stroke::new(2.0, egui::Color32::BLACK)
-                            );
+                            ui.add_space(175.0);
+                            ui.heading("Login: ");
+                        });
 
-                            ui.painter().circle(
-                                egui::Pos2::new(350.0, 160.0),
-                                27.5,
-                                egui::Color32::WHITE,
-                                egui::Stroke::new(2.0, egui::Color32::BLACK)
-                            );
+                        ui.add_space(7.5);
 
+                        ui.horizontal(|ui| {
                             ui.add_space(175.0);
                             
                             ui.add(egui::TextEdit::singleline(&mut self.sign_in_password).hint_text("Password:"));
@@ -86,8 +107,12 @@ impl eframe::App for MyApp {
                                 if sha256::verify_password(self.sign_in_password.clone()) {
                                     self.scene += 1;
                                 }
-                            }
-                        })
+                                else {
+                                    self.show_message = true;
+                                    self.message = "Wrong Password.".to_string()
+                                }
+                            }   
+                        });
                     })
                 });
             },
@@ -98,6 +123,7 @@ impl eframe::App for MyApp {
                 .resizable(false)
                 .show(ctx, |ui| {
                     ui.vertical(|ui| {
+                        self.attempt_show_message(ui);
                         ui.label("Enter new login information: ");
                         ui.add(egui::TextEdit::singleline(&mut self.new_login.application).hint_text("Application Name: "));
                         ui.add(egui::TextEdit::singleline(&mut self.new_login.username).hint_text("Username: "));
@@ -146,11 +172,14 @@ impl eframe::App for MyApp {
                         if ui.add(egui::Button::new("Change Password")).clicked() {
                             if self.new_password == self.confirm_password {
                                 let hashed_password = sha256::hash(self.new_password.clone()).clone();
-                                fs::write("database/password.txt", hashed_password.as_bytes());
-                                println!("Password successfully changed.");
+                                let _ = fs::write("database/password.txt", hashed_password.as_bytes());
+                                
+                                self.message = "Password successfully changed.".to_string();
+                                self.show_message = true;
                             }
                             else {
-                                println!("Passwords do not match.");
+                                self.message = "Passwords do not match.".to_string();
+                                self.show_message = true;
                             }
                         };
                     });

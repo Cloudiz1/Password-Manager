@@ -4,7 +4,7 @@ fn shr(input: u32, shift: usize) -> u32 {
     let mut buffer: String = String::new();
     let input_string: String = format!("{:032b}", input).to_string();
 
-    for i in 0..shift {
+    for _i in 0..shift {
         buffer += "0";
     }
 
@@ -68,7 +68,7 @@ pub fn hash(input: String) -> String {
         }
     }
 
-    for mut block in &mut blocks {
+    for block in &mut blocks {
         while block.len() < 64 {
             let i = block.len();
             block.push(find_next_word([block[i-2], block[i-7], block[i-15], block[i-16]]));
@@ -146,20 +146,12 @@ pub fn verify_password(input: String) -> bool {
     let inputted_password = hash(input);
     let hashed_password: String = match fs::read_to_string("database/password.txt") {
         Ok(v) => v,
-        Err(e) => panic!("could not read hashed password")
+        Err(e) => panic!("could not read hashed password: {}", e)
     };
 
     if inputted_password == hashed_password {
         return true;
     }
 
-    println!("Wrong password");
-
     false
 }
-
-// pub fn test() {
-//     // let input: String = "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz".to_owned();
-//     let input: String = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq".to_owned();
-//     verify_password(input);
-// }

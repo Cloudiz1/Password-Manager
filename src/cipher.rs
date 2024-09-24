@@ -2,10 +2,8 @@ use crate::lookup;
 use crate::states;
 use std::fs;
 use std::str::from_utf8;
-extern crate hex;
 
-fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
-{
+fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4] {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
     for row in 0..4
@@ -14,28 +12,29 @@ fn sub_bytes(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
         {
             let index: usize = input[row][column].into();
 
-            // TODO: rewrite to not use hex crate
-
-            let mut sub_byte = hex::decode(lookup::SBOX[index]);
+            let mut sub_byte = match u8::from_str_radix(lookup::SBOX[index], 16)
+            {
+                Ok(v) => v,
+                Err(e) => panic!("Error converting hex to u8: {:?}", e)
+            };   
 
             if mode == "inverse"
             {
-                sub_byte = hex::decode(lookup::INVERSE_SBOX[index]);
+                sub_byte = match u8::from_str_radix(lookup::INVERSE_SBOX[index], 16)
+                {
+                    Ok(v) => v,
+                    Err(e) => panic!("Error converting hex to u8: {:?}", e)
+                };   
             }
-            
-            match sub_byte
-            {
-                Ok(v) => output[row][column] = v[0],
-                Err(e) => println!("Error: {}", e)
-            };
+
+            output[row][column] = sub_byte
         }
     }
 
     output
 }
 
-fn shift_rows(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
-{
+fn shift_rows(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4] {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
     let mut i: i8 = 0;
@@ -72,8 +71,7 @@ fn shift_rows(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
     output
 }
 
-fn gfm(byte: u8, num: u8) -> u8
-{
+fn gfm(byte: u8, num: u8) -> u8 {
     match num
     {
         2 => {
@@ -123,8 +121,7 @@ fn gfm(byte: u8, num: u8) -> u8
     }
 }
 
-fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4]
-{
+fn mix_columns(input: [[u8; 4]; 4], mode: &str) -> [[u8; 4]; 4] {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
 
     for column in 0..4
@@ -179,15 +176,14 @@ fn key_to_state(key: &str) -> [[u8; 4]; 4] {
 }
 
 const KEY_PATH: &str = "database/key.txt";
-fn generate_keys() -> Vec<[[u8; 4]; 4]>
-{
+fn generate_keys() -> Vec<[[u8; 4]; 4]> {
     let key = match fs::read_to_string(KEY_PATH)
     {
         Ok(v) => v,
         Err(e) => panic!("failed to read file: {:?}", e)
     };
 
-    let mut org_key_state = key_to_state(&key);
+    let org_key_state = key_to_state(&key);
 
     let mut words: Vec<[u8; 4]> = vec![];
 
@@ -256,8 +252,7 @@ fn generate_keys() -> Vec<[[u8; 4]; 4]>
     output_keys
 }
 
-fn xor_state(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
-{
+fn xor_state(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4] {
     let mut output: [[u8; 4]; 4] = [[b'\0'; 4]; 4];
     for i in 0..4
     {
@@ -271,30 +266,21 @@ fn xor_state(input: [[u8; 4]; 4], key: [[u8; 4]; 4]) -> [[u8; 4]; 4]
 }
 
 const IV_PATH: &str = "database/IV.txt";
-pub fn encrypt_str(input: &str) -> String
-{
+pub fn encrypt_str(input: &str) -> String {
     let mut output: Vec<[[u8; 4]; 4]> = vec![]; 
     let mut states = states::create_states(input);
     let keys = generate_keys();
 
-    let IV_string = match fs::read_to_string(IV_PATH) {
+    let iv_string = match fs::read_to_string(IV_PATH) {
         Ok(v) => v,
         Err(e) => panic!("failed to read file: {:?}", e)
     };
 
-    let IV = key_to_state(&IV_string);
+    let iv = key_to_state(&iv_string);
 
-    states[0] = xor_state(states[0], IV);
+    states[0] = xor_state(states[0], iv);
 
-    // let states: Vec<[[u8; 4]; 4]> = vec![[
-    //     [0x32, 0x88, 0x31, 0xe0],
-    //     [0x43, 0x5a, 0x31, 0x37],
-    //     [0xf6, 0x30, 0x98, 0x07],
-    //     [0xa8, 0x8d, 0xa2, 0x34],
-    // ]];
-
-    for (state_number, mut state) in states.into_iter().enumerate()
-    {
+    for (state_number, mut state) in states.into_iter().enumerate() {
         if state_number != 0 {
             state = xor_state(state, output[state_number - 1]);
         }
@@ -319,8 +305,7 @@ pub fn encrypt_str(input: &str) -> String
     states::states_to_hex(output)
 }
 
-pub fn decrypt_str(input: String) -> String
-{
+pub fn decrypt_str(input: String) -> String {
     let mut output: Vec<[[u8; 4]; 4]> = vec![];
 
     let mut states: Vec<[[u8; 4]; 4]> = vec![];
@@ -392,13 +377,13 @@ pub fn decrypt_str(input: String) -> String
     
     let mut byte_array: Vec<u8> = vec![];
 
-    let IV_string = match fs::read_to_string(IV_PATH) {
+    let iv_string = match fs::read_to_string(IV_PATH) {
         Ok(v) => v,
         Err(e) => panic!("failed to read file: {:?}", e)
     };
 
-    let IV = key_to_state(&IV_string);
-    output[0] = xor_state(output[0], IV);
+    let iv = key_to_state(&iv_string);
+    output[0] = xor_state(output[0], iv);
 
     for state in output
     {
@@ -422,50 +407,3 @@ pub fn decrypt_str(input: String) -> String
 
     from_utf8(&byte_array).unwrap().to_string()
 }
-
-// pub fn write_file(input: String, file_path: &str) 
-// {
-// 	match fs::write(file_path, input.as_bytes())
-// 	{
-// 		Ok(v) => v,
-// 		Err(e) => println!("{:?}", e)
-// 	}
-// }
-
-// pub fn test()
-// {
-//     let cipher_text = encrypt_str("abcdefghijklmnopqrstuvwxyz");
-//     println!("{:?}", cipher_text);
-//     let plain_text = decrypt_str(cipher_text);
-//     println!("{:?}", plain_text);
-
-
-// 	// const LOGIN_PATH: &str = "logins.json";
-// 	// let mut file = match fs::File::open(LOGIN_PATH)
-//     // {
-//     //     Ok(v) => v,
-//     //     Err(e) => panic!("{:?}", e)
-//     // };
-
-// 	// let mut contents = "".to_owned();
-// 	// match file.read_to_string(&mut contents)
-// 	// {
-// 	// 	Ok(v) => v,
-// 	// 	Err(e) => panic!("{:?}", e)
-// 	// };
-	
-// 	// drop(file);
-	
-// 	// let content_slice: &str = &contents[..];
-// 	// write_file(content_slice, LOGIN_PATH);
-	
-	
-// 	// const LOGIN_PATH: &str = "logins.txt";
-// 	// let contents = fs::read_to_string(LOGIN_PATH).unwrap();
-// 	// // let contents_slice: &str = &contents[..];
-// 	// write_file(contents, LOGIN_PATH); 
-
-//     // let test_input: &str = "abcdefghijklMNopqrstuvwxyz";
-//     // let cipher_text: String = encrypt_str(test_input);
-//     // println!("{:?}", decrypt_str(cipher_text));
-// }

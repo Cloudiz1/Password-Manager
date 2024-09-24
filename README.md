@@ -14,10 +14,3 @@ On first use, the program generates a `database` directory which contains an ini
 A random key and IV are generated on first use. The encrypted `logins.txt` will begin as an empty file that is encrypted and the program will add to it as the password manager is used. 
 <br> <br>
 Simply run `cargo run` to start.
-
-## Future Thingys
-- edit credentials instead of deleting and remaking them
-- finish that ugly login screen lol
-- make errors and prompts pop on screen instead of in a terminal
-- remove hex crate
-- get rid of my SEVENTEEN WARNINGS LOL
